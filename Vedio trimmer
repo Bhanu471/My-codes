@@ -1,0 +1,87 @@
+import tkinter as tk
+from tkinterdnd2 import DND_FILES, TkinterDnD  # Library for drag and drop functionality
+from moviepy.editor import VideoFileClip      # Library for video processing
+import os
+
+def split_video_into_clips(video_path, clip_duration=2, output_dir="output_clips"):
+    """
+    Splits a video file into smaller clips of specified duration.
+    
+    Args:
+        video_path: Path to the input video file
+        clip_duration: Duration of each clip in seconds (default: 2)
+        output_dir: Directory where output clips will be saved (default: "output_clips")
+    """
+    # Load the video file
+    video = VideoFileClip(video_path)
+    
+    # Get total duration (in seconds) and convert to integer
+    duration = int(video.duration)
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Split the video into clips of specified duration
+    for start in range(0, duration, clip_duration):
+        # Calculate end time (don't exceed video duration)
+        end = min(start + clip_duration, duration)
+        
+        # Extract the clip from the video
+        clip = video.subclip(start, end)
+        
+        # Generate filename based on start and end times
+        filename = f"clip_{start:04d}_{end:04d}.mp4"
+        
+        # Save the clip to the output directory
+        output_path = os.path.join(output_dir, filename)
+        clip.write_videofile(
+            output_path, 
+            codec='libx264',      # Video codec
+            audio_codec='aac',    # Audio codec
+            verbose=False,        # Suppress detailed output
+            logger=None           # No logging
+        )
+        
+        print(f"Saved: {filename}")
+    
+    print("All clips saved.")
+
+def on_drop(event):
+    """
+    Handles the file drop event.
+    
+    Args:
+        event: The drop event containing file path data
+    """
+    # Extract file path from the event data (remove braces that appear when paths have spaces)
+    file_path = event.data.strip('{}')
+    
+    # Check if the file is a supported video format
+    if file_path.lower().endswith(('.mp4', '.mov', '.avi', '.mkv')):
+        # Process the video file
+        split_video_into_clips(file_path)
+    else:
+        print("Unsupported file type.")
+
+# Create the main application window
+root = TkinterDnD.Tk()  # Use TkinterDnD instead of regular tk.Tk() to enable drag and drop
+root.title("Video Splitter")
+root.geometry("400x100")  # Set initial window size
+
+# Create a label that will serve as the drop target
+label = tk.Label(
+    root,
+    text="Drag and drop your video file here to split it",
+    width=40,
+    height=4
+)
+label.pack(padx=10, pady=20)  # Add padding around the label
+
+# Register the label as a drop target for files
+label.drop_target_register(DND_FILES)
+
+# Bind the drop event to our handler function
+label.dnd_bind('<<Drop>>', on_drop)
+
+# Start the application
+root.mainloop()
