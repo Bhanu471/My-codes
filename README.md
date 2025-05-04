@@ -1,2 +1,2 @@
-# My-codes
-For anyone who want to use it
+Requirements: Install pip moviepy
+Take a vedio as an input and devide it into 2 sec clips
